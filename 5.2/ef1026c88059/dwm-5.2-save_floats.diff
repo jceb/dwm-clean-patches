@@ -1,0 +1,39 @@
+diff -r ef1026c88059 dwm.c
+--- a/dwm.c	Tue Sep 09 20:47:01 2008 +0100
++++ b/dwm.c	Sat Nov 01 15:46:34 2008 +0100
+@@ -85,6 +85,7 @@
+ 	char name[256];
+ 	float mina, maxa;
+ 	int x, y, w, h;
++	int sfx, sfy, sfw, sfh; /* stored float geometry, used on mode revert */
+ 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
+ 	int bw, oldbw;
+ 	unsigned int tags;
+@@ -883,6 +884,10 @@
+ 	XSetWindowBorder(dpy, w, dc.norm[ColBorder]);
+ 	configure(c); /* propagates border_width, if size doesn't change */
+ 	updatesizehints(c);
++	c->sfx = c->x;
++	c->sfy = c->y;
++	c->sfw = c->w;
++	c->sfh = c->h;
+ 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
+ 	grabbuttons(c, False);
+ 	updatetitle(c);
+@@ -1469,7 +1474,15 @@
+ 		return;
+ 	sel->isfloating = !sel->isfloating || sel->isfixed;
+ 	if(sel->isfloating)
+-		resize(sel, sel->x, sel->y, sel->w, sel->h, True);
++		/*restore last known float dimensions*/
++		resize(sel, sel->sfx, sel->sfy, sel->sfw, sel->sfh, True);
++	else {
++		/*save last known float dimensions*/
++		sel->sfx = sel->x;
++		sel->sfy = sel->y;
++		sel->sfw = sel->w;
++		sel->sfh = sel->h;
++	}
+ 	arrange();
+ }
+ 

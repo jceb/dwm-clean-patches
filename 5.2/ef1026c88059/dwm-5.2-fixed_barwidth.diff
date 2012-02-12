@@ -1,0 +1,56 @@
+diff -r ef1026c88059 config.def.h
+--- a/config.def.h	Tue Sep 09 20:47:01 2008 +0100
++++ b/config.def.h	Sat Nov 01 15:46:30 2008 +0100
+@@ -10,6 +10,7 @@
+ static const char selfgcolor[]      = "#ffffff";
+ static unsigned int borderpx        = 1;        /* border pixel of windows */
+ static unsigned int snap            = 32;       /* snap pixel */
++static unsigned int barwidth        = 1400;
+ static Bool showbar                 = True;     /* False means no bar */
+ static Bool topbar                  = True;     /* False means bottom bar */
+ static Bool readin                  = True;     /* False means do not read stdin */
+diff -r ef1026c88059 dwm.c
+--- a/dwm.c	Tue Sep 09 20:47:01 2008 +0100
++++ b/dwm.c	Sat Nov 01 15:46:30 2008 +0100
+@@ -518,10 +518,10 @@
+ 	else
+ 		x = dc.x;
+ 	dc.w = TEXTW(stext);
+-	dc.x = ww - dc.w;
++	dc.x = barwidth - dc.w;
+ 	if(dc.x < x) {
+ 		dc.x = x;
+-		dc.w = ww - x;
++		dc.w = barwidth - x;
+ 	}
+ 	drawtext(stext, dc.norm, False);
+ 	if((dc.w = dc.x - x) > bh) {
+@@ -533,7 +533,7 @@
+ 		else
+ 			drawtext(NULL, dc.norm, False);
+ 	}
+-	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, ww, bh, 0, 0);
++	XCopyArea(dpy, dc.drawable, barwin, dc.gc, 0, 0, barwidth, bh, 0, 0);
+ 	XSync(dpy, False);
+ }
+ 
+@@ -1347,7 +1347,7 @@
+ 	wa.background_pixmap = ParentRelative;
+ 	wa.event_mask = ButtonPressMask|ExposureMask;
+ 
+-	barwin = XCreateWindow(dpy, root, wx, by, ww, bh, 0, DefaultDepth(dpy, screen),
++	barwin = XCreateWindow(dpy, root, wx, by, barwidth, bh, 0, DefaultDepth(dpy, screen),
+ 			CopyFromParent, DefaultVisual(dpy, screen),
+ 			CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
+ 	XDefineCursor(dpy, barwin, cursor[CurNormal]);
+@@ -1533,8 +1533,8 @@
+ updatebar(void) {
+ 	if(dc.drawable != 0)
+ 		XFreePixmap(dpy, dc.drawable);
+-	dc.drawable = XCreatePixmap(dpy, root, ww, bh, DefaultDepth(dpy, screen));
+-	XMoveResizeWindow(dpy, barwin, wx, by, ww, bh);
++	dc.drawable = XCreatePixmap(dpy, root, barwidth, bh, DefaultDepth(dpy, screen));
++	XMoveResizeWindow(dpy, barwin, wx, by, barwidth, bh);
+ }
+ 
+ void

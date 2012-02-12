@@ -1,0 +1,104 @@
+diff -r ef1026c88059 config.def.h
+--- a/config.def.h	Tue Sep 09 20:47:01 2008 +0100
++++ b/config.def.h	Sat Nov 01 15:46:32 2008 +0100
+@@ -10,6 +10,8 @@
+ static const char selfgcolor[]      = "#ffffff";
+ static unsigned int borderpx        = 1;        /* border pixel of windows */
+ static unsigned int snap            = 32;       /* snap pixel */
++static unsigned int two_tx          = 1400;     /* x offset of the second screen */
++static unsigned int two_th          = 1024;     /* height of the second screen */
+ static Bool showbar                 = True;     /* False means no bar */
+ static Bool topbar                  = True;     /* False means bottom bar */
+ static Bool readin                  = True;     /* False means do not read stdin */
+@@ -28,9 +30,11 @@
+ static float mfact      = 0.55; /* factor of master area size [0.05..0.95] */
+ static Bool resizehints = True; /* False means respect size hints in tiled resizals */
+ 
++#include "tile2.c"
+ static Layout layouts[] = {
+ 	/* symbol     arrange function */
+-	{ "[]=",      tile },    /* first entry is default */
++	{ "[]=",      tiletwo }, /* first entry is default */
++	{ "[]|",      tilehtwo },
+ 	{ "><>",      NULL },    /* no layout function means floating behavior */
+ 	{ "[M]",      monocle },
+ };
+diff -r ef1026c88059 tile2.c
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/tile2.c	Sat Nov 01 15:46:32 2008 +0100
+@@ -0,0 +1,75 @@
++void
++tiletwo(void) {
++	int x, y, h, w, mw, ty, th;
++	unsigned int i, n;
++	Client *c;
++
++	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c->next), n++);
++	if(n == 0)
++		return;
++
++	/* master */
++	c = nexttiled(clients);
++	mw = two_tx < ww ? two_tx : ww * mfact;
++	resize(c, wx, wy, (n == 1 ? MIN(two_tx, ww) : mw) - 2 * c->bw, wh - 2 * c->bw, resizehints);
++	/*printf ("master %dx %dy %dw %dh; %dwx %dwy %dww %dwh; %dsx %dsy %dsw %dsh\n", c->x, c->y, c->w, c->h, wx, wy, ww, wh, sx, sy, sw, sh);*/
++
++	if(--n == 0)
++		return;
++
++	/* tile stack */
++	ty = two_tx < ww ? 0 : wy;
++	th = two_tx < ww ? two_th : wh;
++	x = two_tx < ww ? mw : (wx + mw > c->x + c->w) ? c->x + c->w + 2 * c->bw : wx + mw;
++	y = ty;
++	w = (wx + mw > c->x + c->w) ? wx + ww - x : ww - mw;
++	h = th / n;
++	if(h < bh)
++		h = th;
++
++	for(i = 0, c = nexttiled(c->next); c; c = nexttiled(c->next), i++) {
++		resize(c, x, y, w - 2 * c->bw, /* remainder */ ((i + 1 == n)
++		       ? (ty + th) - y : h) - 2 * c->bw, resizehints);
++		/*printf ("client %dx %dy %dw %dh; %dwx %dwy %dww %dwh; %dsx %dsy %dsw %dsh\n", c->x, c->y, c->w, c->h, wx, wy, ww, wh, sx, sy, sw, sh);*/
++		if(h != th)
++			y = c->y + c->h + 2 * c->bw;
++	}
++}
++
++void
++tilehtwo(void) {
++	int x, y, h, w, mw, ty, th;
++	unsigned int i, n;
++	Client *c;
++
++	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c->next), n++);
++	if(n == 0)
++		return;
++
++	/* master */
++	c = nexttiled(clients);
++	mw = two_tx < ww ? two_tx : ww * mfact;
++	resize(c, wx, wy, (n == 1 ? MIN(two_tx, ww) : mw) - 2 * c->bw, wh - 2 * c->bw, resizehints);
++	/*printf ("master %dx %dy %dw %dh; %dwx %dwy %dww %dwh; %dsx %dsy %dsw %dsh\n", c->x, c->y, c->w, c->h, wx, wy, ww, wh, sx, sy, sw, sh);*/
++
++	if(--n == 0)
++		return;
++
++	/* tile stack */
++	ty = two_tx < ww ? 0 : wy;
++	th = two_tx < ww ? two_th : wh;
++	x = two_tx < ww ? mw : c->x + c->w + 2 * c->bw;
++	y = ty;
++	w = (ww - x) / n;
++	h = th;
++	if(h < bh)
++		h = th;
++
++	for(i = 0, c = nexttiled(c->next); c; c = nexttiled(c->next), i++) {
++		resize(c, x, y, /* remainder */ ((i + 1 == n)
++		       ? (wx + ww) - x : w) - 2 * c->bw, h, resizehints);
++		/*printf ("client %dx %dy %dw %dh; %dwx %dwy %dww %dwh; %dsx %dsy %dsw %dsh\n", c->x, c->y, c->w, c->h, wx, wy, ww, wh, sx, sy, sw, sh);*/
++		if(x < ww)
++			x = c->x + c->w + 2 * c->bw;
++	}
++}

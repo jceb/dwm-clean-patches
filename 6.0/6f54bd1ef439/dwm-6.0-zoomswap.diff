@@ -1,0 +1,32 @@
+URL: no URL yet
+This patch swaps the current window with the previous master when zooming.
+
+diff -r 6f54bd1ef439 dwm.c
+--- a/dwm.c	Wed Jan 04 13:30:12 2012 +0100
++++ b/dwm.c	Sun Feb 12 09:32:55 2012 +0100
+@@ -2116,6 +2116,7 @@
+ void
+ zoom(const Arg *arg) {
+ 	Client *c = selmon->sel;
++	Client *at, *tmp;
+ 
+ 	if(!selmon->lt[selmon->sellt]->arrange
+ 	|| (selmon->sel && selmon->sel->isfloating))
+@@ -2123,7 +2124,16 @@
+ 	if(c == nexttiled(selmon->clients))
+ 		if(!c || !(c = nexttiled(c->next)))
+ 			return;
+-	pop(c);
++	for(at = selmon->clients; at && at->next != c; at = nexttiled(at->next)) ;
++ 	pop(c);
++	/* swap windows instead of pushing the previous one down */
++	if(c->next != at) {
++		tmp = c->next;
++		c->next = tmp->next;
++		tmp->next = at->next;
++		at->next = tmp;
++		arrange(c->mon);
++	}
+ }
+ 
+ int

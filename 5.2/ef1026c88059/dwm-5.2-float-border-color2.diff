@@ -1,0 +1,58 @@
+diff -r ef1026c88059 config.def.h
+--- a/config.def.h	Tue Sep 09 20:47:01 2008 +0100
++++ b/config.def.h	Sat Nov 01 15:46:38 2008 +0100
+@@ -8,6 +8,8 @@
+ static const char selbordercolor[]  = "#0066ff";
+ static const char selbgcolor[]      = "#0066ff";
+ static const char selfgcolor[]      = "#ffffff";
++static const char floatnormbordercolor[] = "#dddddd";
++static const char floatselbordercolor[] = "#ff0000";
+ static unsigned int borderpx        = 1;        /* border pixel of windows */
+ static unsigned int snap            = 32;       /* snap pixel */
+ static Bool showbar                 = True;     /* False means no bar */
+diff -r ef1026c88059 dwm.c
+--- a/dwm.c	Tue Sep 09 20:47:01 2008 +0100
++++ b/dwm.c	Sat Nov 01 15:46:38 2008 +0100
+@@ -59,7 +59,7 @@
+ 
+ /* enums */
+ enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+-enum { ColBorder, ColFG, ColBG, ColLast };              /* color */
++enum { ColBorder, ColFG, ColBG, ColBorderFloat, ColLast };              /* color */
+ enum { NetSupported, NetWMName, NetLast };              /* EWMH atoms */
+ enum { WMProtocols, WMDelete, WMState, WMLast };        /* default atoms */
+ enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
+@@ -613,13 +613,19 @@
+ 		for(c = stack; c && !ISVISIBLE(c); c = c->snext);
+ 	if(sel && sel != c) {
+ 		grabbuttons(sel, False);
+-		XSetWindowBorder(dpy, sel->win, dc.norm[ColBorder]);
++		if(sel->isfloating)
++			XSetWindowBorder(dpy, sel->win, dc.norm[ColBorderFloat]);
++		else
++			XSetWindowBorder(dpy, sel->win, dc.norm[ColBorder]);
+ 	}
+ 	if(c) {
+ 		detachstack(c);
+ 		attachstack(c);
+ 		grabbuttons(c, True);
+-		XSetWindowBorder(dpy, c->win, dc.sel[ColBorder]);
++		if(c->isfloating)
++			XSetWindowBorder(dpy, c->win, dc.sel[ColBorderFloat]);
++		else
++			XSetWindowBorder(dpy, c->win, dc.sel[ColBorder]);
+ 		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
+ 	}
+ 	else
+@@ -1328,9 +1334,11 @@
+ 	dc.norm[ColBorder] = getcolor(normbordercolor);
+ 	dc.norm[ColBG] = getcolor(normbgcolor);
+ 	dc.norm[ColFG] = getcolor(normfgcolor);
++	dc.norm[ColBorderFloat] = getcolor(floatnormbordercolor);
+ 	dc.sel[ColBorder] = getcolor(selbordercolor);
+ 	dc.sel[ColBG] = getcolor(selbgcolor);
+ 	dc.sel[ColFG] = getcolor(selfgcolor);
++	dc.sel[ColBorderFloat] = getcolor(floatselbordercolor);
+ 	dc.drawable = XCreatePixmap(dpy, root, DisplayWidth(dpy, screen), bh, DefaultDepth(dpy, screen));
+ 	dc.gc = XCreateGC(dpy, root, 0, 0);
+ 	XSetLineAttributes(dpy, dc.gc, 1, LineSolid, CapButt, JoinMiter);

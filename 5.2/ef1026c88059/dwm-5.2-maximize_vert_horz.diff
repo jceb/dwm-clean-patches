@@ -1,0 +1,74 @@
+diff -r ef1026c88059 config.def.h
+--- a/config.def.h	Tue Sep 09 20:47:01 2008 +0100
++++ b/config.def.h	Sat Nov 01 15:46:36 2008 +0100
+@@ -28,6 +28,7 @@
+ static float mfact      = 0.55; /* factor of master area size [0.05..0.95] */
+ static Bool resizehints = True; /* False means respect size hints in tiled resizals */
+ 
++#include "maximize.c"
+ static Layout layouts[] = {
+ 	/* symbol     arrange function */
+ 	{ "[]=",      tile },    /* first entry is default */
+diff -r ef1026c88059 dwm.c
+--- a/dwm.c	Tue Sep 09 20:47:01 2008 +0100
++++ b/dwm.c	Sat Nov 01 15:46:36 2008 +0100
+@@ -85,7 +85,8 @@
+ 	char name[256];
+ 	float mina, maxa;
+ 	int x, y, w, h;
+-	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
++	int rx, ry, rw, rh;
++	int basew, baseh, incw, inch, maxw, maxh, minw, minh, ismax, wasfloating;
+ 	int bw, oldbw;
+ 	unsigned int tags;
+ 	Bool isfixed, isfloating, isurgent;
+diff -r ef1026c88059 maximize.c
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/maximize.c	Sat Nov 01 15:46:36 2008 +0100
+@@ -0,0 +1,46 @@
++void
++maximize(int x, int y, int w, int h) {
++	XEvent ev;
++
++	if(!sel || sel->isfixed)
++		return;
++	XRaiseWindow(dpy, sel->win);
++	if(!sel->ismax) {
++		if(!lt[sellt]->arrange || sel->isfloating)
++			sel->wasfloating = True;
++		else {
++			togglefloating(NULL);
++			sel->wasfloating = False;
++		}
++		sel->rx = sel->x;
++		sel->ry = sel->y;
++		sel->rw = sel->w;
++		sel->rh = sel->h;
++		resize(sel, x, y, w, h, True);
++		sel->ismax = True;
++	}
++	else {
++		resize(sel, sel->rx, sel->ry, sel->rw, sel->rh, True);
++		if(!sel->wasfloating)
++			togglefloating(NULL);
++		sel->ismax = False;
++	}
++	drawbar();
++	while(XCheckMaskEvent(dpy, EnterWindowMask, &ev));
++}
++
++void
++togglemaximize(const Arg *arg) {
++	maximize(wx, wy, ww - 2 * borderpx, wh - 2 * borderpx);
++}
++
++void
++toggleverticalmax(const Arg *arg) {
++	maximize(sel->x, wy, sel->w, wh - 2 * borderpx);
++}
++
++void
++togglehorizontalmax(const Arg *arg) {
++	maximize(wx, sel->y, ww - 2 * borderpx, sel->h);
++}
++

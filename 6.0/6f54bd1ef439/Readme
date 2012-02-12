@@ -1,0 +1,35 @@
+Installation
+------------
+
+# activate mercurial patch stack
+$ cat >> ~/.hgrc
+[extensions]
+mq =
+
+# clone patches repository including the dwm repository
+$ hg qclone ssh://hg@bitbucket.org/jceb81/dwm-patches
+
+# activate all patches, including the personal configuration
+$ hg qpush -a
+
+# build dwm
+$ make
+
+Patch References
+----------------
+attachabove.patch             - http://dwm.suckless.org/patches/attachabove
+float_border_color2.patch     - http://dwm.suckless.org/patches/historical/float_border_color
+maximize_vert_horz.patch      - http://dwm.suckless.org/patches/historical/moveresize
+moveresize.patch              - http://dwm.suckless.org/patches/historical/moveresize
+pertag.patch                  - http://dwm.suckless.org/patches/pertag
+push.patch                    - http://dwm.suckless.org/patches/push
+save_floats.patch             - http://dwm.suckless.org/patches/historical/save_floats
+single_window_no_border.patch - no URL yet
+tagall.patch                  - http://dwm.suckless.org/patches/historical/tagall
+swapfocus.patch               - http://dwm.suckless.org/patches/swapfocus
+statusallmons.patch           - http://dwm.suckless.org/patches/statusallmons
+zoomswap.patch                - no URL yet
+
+Not maintained
+--------------
+raiselower.patch              - http://dwm.suckless.org/patches/historical/raiselower

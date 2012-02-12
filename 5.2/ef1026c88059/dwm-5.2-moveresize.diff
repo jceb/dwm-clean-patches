@@ -1,0 +1,50 @@
+diff -r ef1026c88059 config.def.h
+--- a/config.def.h	Tue Sep 09 20:47:01 2008 +0100
++++ b/config.def.h	Sat Nov 01 15:46:26 2008 +0100
+@@ -28,6 +28,7 @@
+ static float mfact      = 0.55; /* factor of master area size [0.05..0.95] */
+ static Bool resizehints = True; /* False means respect size hints in tiled resizals */
+ 
++#include "moveresize.c"
+ static Layout layouts[] = {
+ 	/* symbol     arrange function */
+ 	{ "[]=",      tile },    /* first entry is default */
+diff -r ef1026c88059 moveresize.c
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/moveresize.c	Sat Nov 01 15:46:26 2008 +0100
+@@ -0,0 +1,35 @@
++void
++moveresize(const Arg *arg) {
++	int x, y, w, h, nx, ny, nw, nh, ox, oy, ow, oh;
++	char xAbs, yAbs, wAbs, hAbs;
++	int msx, msy, dx, dy, nmx, nmy;
++	unsigned int dui;
++	Window dummy;
++
++	if (!sel || !arg)
++		return;
++	if (lt[sellt]->arrange && !sel->isfloating)
++		return;
++	if(sscanf((char *)arg->v, "%d%c %d%c %d%c %d%c", &x, &xAbs, &y, &yAbs, &w, &wAbs, &h, &hAbs) != 8)
++		return;
++	nx = xAbs == 'X' ? x : sel->x + x;
++	ny = yAbs == 'Y' ? y : sel->y + y;
++	nw = wAbs == 'W' ? w : sel->w + w;
++	nh = hAbs == 'H' ? h : sel->h + h;
++
++	ox = sel->x;
++	oy = sel->y;
++	ow = sel->w;
++	oh = sel->h;
++
++	XRaiseWindow(dpy, sel->win);
++	Bool xqp = XQueryPointer(dpy, root, &dummy, &dummy, &msx, &msy, &dx, &dy, &dui);
++	resize(sel, nx, ny, nw, nh, True);
++	if (xqp && ox <= msx && (ox + ow) >= msx && oy <= msy && (oy + oh) >= msy)
++	{
++		nmx = sx-ox+sel->w-ow-1 < 0 ? 0 : sx-ox+sel->w-ow-1;
++		nmy = sy-oy+sel->h-oh-1 < 0 ? 0 : sy-oy+sel->h-oh-1;
++		XWarpPointer(dpy, None, sel->win, 0, 0, 0, 0, nmx, nmy);
++	}
++}
++

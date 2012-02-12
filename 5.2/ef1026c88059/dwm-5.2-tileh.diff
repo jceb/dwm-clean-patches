@@ -1,0 +1,64 @@
+diff -r ef1026c88059 config.def.h
+--- a/config.def.h	Tue Sep 09 20:47:01 2008 +0100
++++ b/config.def.h	Sat Nov 01 15:46:30 2008 +0100
+@@ -28,9 +28,11 @@
+ static float mfact      = 0.55; /* factor of master area size [0.05..0.95] */
+ static Bool resizehints = True; /* False means respect size hints in tiled resizals */
+ 
++#include "tileh.c"
+ static Layout layouts[] = {
+ 	/* symbol     arrange function */
+ 	{ "[]=",      tile },    /* first entry is default */
++	{ "[]|",      tileh },
+ 	{ "><>",      NULL },    /* no layout function means floating behavior */
+ 	{ "[M]",      monocle },
+ };
+@@ -63,8 +65,9 @@
+ 	{ MODKEY,                       XK_Tab,    view,           {0} },
+ 	{ MODKEY|ShiftMask,             XK_c,      killclient,     {0} },
+ 	{ MODKEY,                       XK_t,      setlayout,      {.v = &layouts[0]} },
+-	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[1]} },
+-	{ MODKEY,                       XK_m,      setlayout,      {.v = &layouts[2]} },
++	{ MODKEY|ShiftMask,             XK_t,      setlayout,      {.v = &layouts[1]} },
++	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[2]} },
++	{ MODKEY,                       XK_m,      setlayout,      {.v = &layouts[3]} },
+ 	{ MODKEY,                       XK_space,  setlayout,      {0} },
+ 	{ MODKEY|ShiftMask,             XK_space,  togglefloating, {0} },
+ 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
+diff -r ef1026c88059 tileh.c
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/tileh.c	Sat Nov 01 15:46:30 2008 +0100
+@@ -0,0 +1,33 @@
++void
++tileh(void) {
++	int x, y, h, w, mw;
++	unsigned int i, n;
++	Client *c;
++
++	for(n = 0, c = nexttiled(clients); c; c = nexttiled(c->next), n++);
++	if(n == 0)
++		return;
++
++	/* master */
++	c = nexttiled(clients);
++	mw = mfact * ww;
++	resize(c, wx, wy, (n == 1 ? ww : mw) - 2 * c->bw, wh - 2 * c->bw, resizehints);
++
++	if(--n == 0)
++		return;
++
++	/* tile stack */
++	x = c->x + c->w + 2 * c->bw;
++	y = wy;
++	w = (ww - x) / n;
++	h = wh;
++	if(h < bh)
++		h = wh;
++
++	for(i = 0, c = nexttiled(c->next); c; c = nexttiled(c->next), i++) {
++		resize(c, x, y, /* remainder */ ((i + 1 == n)
++		       ? (wx + ww) - x : w) - 2 * c->bw, h, resizehints);
++		if(x < ww)
++			x = c->x + c->w + 2 * c->bw;
++	}
++}

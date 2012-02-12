@@ -1,0 +1,35 @@
+diff -r ef1026c88059 config.def.h
+--- a/config.def.h	Tue Sep 09 20:47:01 2008 +0100
++++ b/config.def.h	Sat Nov 01 15:46:28 2008 +0100
+@@ -28,6 +28,7 @@
+ static float mfact      = 0.55; /* factor of master area size [0.05..0.95] */
+ static Bool resizehints = True; /* False means respect size hints in tiled resizals */
+ 
++#include "raiselower.c"
+ static Layout layouts[] = {
+ 	/* symbol     arrange function */
+ 	{ "[]=",      tile },    /* first entry is default */
+diff -r ef1026c88059 raiselower.c
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/raiselower.c	Sat Nov 01 15:46:28 2008 +0100
+@@ -0,0 +1,20 @@
++void
++raisewindow (const Arg *arg) {
++	if (!sel)
++		return;
++	if(lt[sellt]->arrange && !sel->isfloating)
++		return;
++	if (arg->i > 0) {
++		XRaiseWindow(dpy, sel->win);
++	} else {
++		if (!lt[sellt]->arrange)
++			XLowerWindow(dpy, sel->win);
++		else {
++			XWindowChanges wc;
++			wc.stack_mode = Above;
++			wc.sibling = barwin;
++			XConfigureWindow(dpy, sel->win, CWSibling | CWStackMode, &wc);
++		}
++	}
++}
++

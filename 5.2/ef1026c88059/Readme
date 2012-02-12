@@ -1,0 +1,16 @@
+Patch References:
+float-border-color2.patch	- http://www.suckless.org/wiki/dwm/patches/float_border_color
+maximize_vert_horz.patch	- http://www.suckless.org/wiki/dwm/patches/moveresize
+moveresize.patch			- http://www.suckless.org/wiki/dwm/patches/moveresize
+pertag.patch				- http://www.suckless.org/wiki/dwm/patches/pertag
+raiselower.patch			- http://www.suckless.org/wiki/dwm/patches/raiselower
+save_floats.patch			- http://www.suckless.org/wiki/dwm/patches/save_floats
+tagall.patch				- http://www.suckless.org/wiki/dwm/patches/tagall
+tileh.patch					- http://www.suckless.org/wiki/dwm/patches/tileh
+
+Not maintained at the moment:
+bstack.patch				- http://www.suckless.org/wiki/dwm/patches/bottom_stack
+fibonacci.patch				- http://www.suckless.org/wiki/dwm/patches/fibonacci
+gridmode.patch				- http://www.suckless.org/wiki/dwm/patches/gridmode
+nmaster.patch				- http://www.suckless.org/wiki/dwm/patches/nmaster
+reload.patch				- http://na.srck.net/dwm
