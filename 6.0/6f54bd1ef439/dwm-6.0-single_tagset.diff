@@ -1,5 +1,5 @@
 Author: Jan Christoph Ebersbach <jceb@e-jc.de>
-URL: no URL yet
+URL: http://dwm.suckless.org/patches/single_tagset
 This patch addresses the multi-monitor setup. Instead of having separate tags
 for every monitor there is just one list of tags for all monitors. Instead of
 moving windows from one monitor to the other, the desired tag from the
@@ -15,9 +15,9 @@ Several deep changes needed to be made:
 
 Please be aware that this patch probably breaks any other patch!
 
-diff -r 627ba72d3465 dwm.c
---- a/dwm.c	Sun Mar 18 17:23:36 2012 +0100
-+++ b/dwm.c	Sun Mar 18 20:44:53 2012 +0100
+diff -r 60b9b3056194 dwm.c
+--- a/dwm.c	Mon Mar 19 07:31:04 2012 +0100
++++ b/dwm.c	Mon Mar 19 07:32:30 2012 +0100
 @@ -45,7 +45,7 @@
  #define CLEANMASK(mask)         (mask & ~(numlockmask|LockMask) & (ShiftMask|ControlMask|Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask))
  #define INTERSECT(x,y,w,h,m)    (MAX(0, MIN((x)+(w),(m)->wx+(m)->ww) - MAX((x),(m)->wx)) \
@@ -436,7 +436,7 @@ diff -r 627ba72d3465 dwm.c
  					selmon = mons;
 +				for(c = m->cl->clients; c; c = c->next) {
 +					dirty = True;
-+					if(ISVISIBLE(c, m))
++					if(c->mon == m)
 +						c->mon = selmon;
 +				}
  				cleanupmon(m);

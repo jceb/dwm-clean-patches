@@ -1,5 +1,5 @@
 Author: Jan Christoph Ebersbach <jceb@e-jc.de>
-URL: no URL yet
+URL: http://dwm.suckless.org/patches/single_tagset
 This patch addresses the multi-monitor setup. Instead of having separate tags
 for every monitor there is just one list of tags for all monitors. Instead of
 moving windows from one monitor to the other, the desired tag from the
@@ -459,7 +459,7 @@ diff -r 454a5dd61441 dwm.c
  					selmon = mons;
 +				for(c = m->cl->clients; c; c = c->next) {
 +					dirty = True;
-+					if(ISVISIBLE(c, m))
++					if(c->mon == m)
 +						c->mon = selmon;
 +				}
  				cleanupmon(m);
