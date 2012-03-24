@@ -29,7 +29,7 @@ single_tagset.patch       - http://dwm.suckless.org/patches/single_tagset
 single_window_no_border   - http://dwm.suckless.org/patches/noborder
 statusallmons.patch       - http://dwm.suckless.org/patches/statusallmons
 swapfocus.patch           - http://dwm.suckless.org/patches/swapfocus
-systray.patch             - no URL yet
+systray.patch             - http://dwm.suckless.org/patches/systray
 tagall.patch              - http://dwm.suckless.org/patches/historical/tagall
 zoomswap.patch            - http://dwm.suckless.org/patches/zoomswap
 
