@@ -27,6 +27,9 @@ $ hg refresh
 Continue updating patches till all apply cleanly:
 $ make -f clean.mk
 
+Specific patches can be updated by passing them as arguments:
+$ make -f clean.mk args="patches"
+
 Finally upload the resulting directory containing only patches that
 apply cleanly against the tip of the dwm repository.
 $ cp -r $VERSION dwm-clean-patches/

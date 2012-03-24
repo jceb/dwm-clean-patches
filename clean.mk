@@ -7,7 +7,7 @@ all: build
 
 build: .hg/patches .hg/patches/README ./clean.sh
 	mkdir -p $(VVERSION)
-	./clean.sh $(VVERSION)
+	./clean.sh $(VVERSION) $(args)
 
 clean:
 	-rm -rf $(VVERSION)
