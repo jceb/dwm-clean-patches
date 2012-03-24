@@ -1,10 +1,10 @@
 Author: Jan Christoph Ebersbach <jceb@e-jc.de>, inspired by http://code.google.com/p/dwm-plus
-URL: no URL yet
+URL: http://dwm.suckless.org/patches/systray
 Implements a system tray for dwm.
 
 diff -r ad90e7fab364 config.def.h
 --- a/config.def.h	Fri Feb 10 00:36:08 2012 +0000
-+++ b/config.def.h	Sat Mar 24 13:41:16 2012 +0100
++++ b/config.def.h	Sat Mar 24 18:01:59 2012 +0100
 @@ -10,6 +10,8 @@
  static const char selfgcolor[]      = "#eeeeee";
  static const unsigned int borderpx  = 1;        /* border pixel of windows */
@@ -24,7 +24,7 @@ diff -r ad90e7fab364 config.def.h
  	{ "[]=",      tile },    /* first entry is default */
 diff -r ad90e7fab364 dwm.c
 --- a/dwm.c	Fri Feb 10 00:36:08 2012 +0000
-+++ b/dwm.c	Sat Mar 24 13:41:16 2012 +0100
++++ b/dwm.c	Sat Mar 24 18:01:59 2012 +0100
 @@ -55,12 +55,15 @@
  #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
  #define TEXTW(X)                (textnw(X, strlen(X)) + dc.font.height)
@@ -44,9 +44,9 @@ diff -r ad90e7fab364 dwm.c
  enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
  enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
         ClkClientWin, ClkRootWin, ClkLast };             /* clicks */
-@@ -145,6 +148,19 @@
- 	const Layout *lt[2];
- };
+@@ -154,6 +157,19 @@
+ 	int monitor;
+ } Rule;
  
 +typedef struct SystrayIcon SystrayIcon;
 +struct SystrayIcon {
@@ -55,15 +55,15 @@ diff -r ad90e7fab364 dwm.c
 +	SystrayIcon *next;
 +};
 +
-+typedef struct Systray Systray;
++typedef struct Systray   Systray;
 +struct Systray {
 +	Window win;
 +	SystrayIcon *icons;
 +};
 +
- typedef struct {
- 	const char *class;
- 	const char *instance;
+ /* function declarations */
+ static void applyrules(Client *c);
+ static Bool applysizehints(Client *c, int *x, int *y, int *w, int *h, Bool interact);
 @@ -189,6 +205,7 @@
  static unsigned long getcolor(const char *colstr);
  static Bool getrootptr(int *x, int *y);
@@ -168,7 +168,15 @@ diff -r ad90e7fab364 dwm.c
  }
  
  void
-@@ -743,6 +799,9 @@
+@@ -722,6 +778,7 @@
+ 	unsigned long *col;
+ 	Client *c;
+ 
++	resizebarwin(m);
+ 	for(c = m->clients; c; c = c->next) {
+ 		occ |= c->tags;
+ 		if(c->isurgent)
+@@ -743,6 +800,9 @@
  	if(m == selmon) { /* status is only drawn on selected monitor */
  		dc.w = TEXTW(stext);
  		dc.x = m->ww - dc.w;
@@ -178,7 +186,15 @@ diff -r ad90e7fab364 dwm.c
  		if(dc.x < x) {
  			dc.x = x;
  			dc.w = m->ww - x;
-@@ -962,6 +1021,14 @@
+@@ -862,6 +922,7 @@
+ 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
+ 	selmon->sel = c;
+ 	drawbars();
++	updatesystray();
+ }
+ 
+ void
+@@ -962,6 +1023,14 @@
  	return result;
  }
  
@@ -193,7 +209,7 @@ diff -r ad90e7fab364 dwm.c
  Bool
  gettextprop(Window w, Atom atom, char *text, unsigned int size) {
  	char **list = NULL;
-@@ -1180,6 +1247,10 @@
+@@ -1180,6 +1249,10 @@
  maprequest(XEvent *e) {
  	static XWindowAttributes wa;
  	XMapRequestEvent *ev = &e->xmaprequest;
@@ -204,7 +220,7 @@ diff -r ad90e7fab364 dwm.c
  
  	if(!XGetWindowAttributes(dpy, ev->window, &wa))
  		return;
-@@ -1291,9 +1362,14 @@
+@@ -1291,9 +1364,14 @@
  void
  propertynotify(XEvent *e) {
  	Client *c;
@@ -219,7 +235,7 @@ diff -r ad90e7fab364 dwm.c
  	if((ev->window == root) && (ev->atom == XA_WM_NAME))
  		updatestatus();
  	else if(ev->state == PropertyDelete)
-@@ -1343,12 +1419,32 @@
+@@ -1343,12 +1421,32 @@
  }
  
  void
@@ -252,7 +268,7 @@ diff -r ad90e7fab364 dwm.c
  resizeclient(Client *c, int x, int y, int w, int h) {
  	XWindowChanges wc;
  
-@@ -1603,6 +1699,9 @@
+@@ -1603,6 +1701,9 @@
  	wmatom[WMTakeFocus] = XInternAtom(dpy, "WM_TAKE_FOCUS", False);
  	netatom[NetActiveWindow] = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
  	netatom[NetSupported] = XInternAtom(dpy, "_NET_SUPPORTED", False);
@@ -262,7 +278,7 @@ diff -r ad90e7fab364 dwm.c
  	netatom[NetWMName] = XInternAtom(dpy, "_NET_WM_NAME", False);
  	netatom[NetWMState] = XInternAtom(dpy, "_NET_WM_STATE", False);
  	netatom[NetWMFullscreen] = XInternAtom(dpy, "_NET_WM_STATE_FULLSCREEN", False);
-@@ -1624,6 +1723,8 @@
+@@ -1624,6 +1725,8 @@
  	XSetLineAttributes(dpy, dc.gc, 1, LineSolid, CapButt, JoinMiter);
  	if(!dc.font.set)
  		XSetFont(dpy, dc.gc, dc.font.xfont->fid);
@@ -271,12 +287,11 @@ diff -r ad90e7fab364 dwm.c
  	/* init bars */
  	updatebars();
  	updatestatus();
-@@ -1732,8 +1833,19 @@
+@@ -1732,8 +1835,18 @@
  togglebar(const Arg *arg) {
  	selmon->showbar = !selmon->showbar;
  	updatebarpos(selmon);
 -	XMoveResizeWindow(dpy, selmon->barwin, selmon->wx, selmon->by, selmon->ww, bh);
-+	resizebarwin(selmon);
  	arrange(selmon);
 +	if(showsystray) {
 +		XWindowChanges wc;
@@ -292,7 +307,7 @@ diff -r ad90e7fab364 dwm.c
  }
  
  void
-@@ -1809,6 +1921,7 @@
+@@ -1809,6 +1922,7 @@
  void
  unmapnotify(XEvent *e) {
  	Client *c;
@@ -300,7 +315,7 @@ diff -r ad90e7fab364 dwm.c
  	XUnmapEvent *ev = &e->xunmap;
  
  	if((c = wintoclient(ev->window))) {
-@@ -1816,12 +1929,17 @@
+@@ -1816,12 +1930,17 @@
  			setclientstate(c, WithdrawnState);
  		else
  			unmanage(c, False);
@@ -318,7 +333,7 @@ diff -r ad90e7fab364 dwm.c
  	XSetWindowAttributes wa = {
  		.override_redirect = True,
  		.background_pixmap = ParentRelative,
-@@ -1830,7 +1948,10 @@
+@@ -1830,7 +1949,10 @@
  	for(m = mons; m; m = m->next) {
  		if (m->barwin)
  			continue;
@@ -330,15 +345,7 @@ diff -r ad90e7fab364 dwm.c
  		                          CopyFromParent, DefaultVisual(dpy, screen),
  		                          CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
  		XDefineCursor(dpy, m->barwin, cursor[CurNormal]);
-@@ -1846,6 +1967,7 @@
- 		m->wh -= bh;
- 		m->by = m->topbar ? m->wy : m->wy + m->wh;
- 		m->wy = m->topbar ? m->wy + bh : m->wy;
-+		resizebarwin(m);
- 	}
- 	else
- 		m->by = -bh;
-@@ -2014,6 +2136,68 @@
+@@ -2014,6 +2136,59 @@
  }
  
  void
@@ -346,11 +353,8 @@ diff -r ad90e7fab364 dwm.c
 +	XSetWindowAttributes wa;
 +	XEvent event;
 +	SystrayIcon *i;
++	unsigned int x = selmon->mx + selmon->mw;
 +	unsigned int w = 1;
-+	unsigned int pos = selmon->mw;
-+	unsigned int pos_y = 0;
-+	if(!selmon->topbar)
-+		pos_y = selmon->mh - bh;
 +
 +	if(!showsystray)
 +		return;
@@ -358,7 +362,7 @@ diff -r ad90e7fab364 dwm.c
 +		/* init systray */
 +		if(!(systray = (Systray *)calloc(1, sizeof(Systray))))
 +			die("fatal: could not malloc() %u bytes\n", sizeof(Systray));
-+		systray->win = XCreateSimpleWindow(dpy, root, 0, 0, 1, 1, 0, 0, dc.norm[ColBG]);
++		systray->win = XCreateSimpleWindow(dpy, root, x, selmon->by, w, bh, 0, 0, dc.norm[ColBG]);
 +		wa.event_mask        = ButtonPressMask | ExposureMask;
 +		wa.override_redirect = True;
 +		wa.background_pixmap = ParentRelative;
@@ -388,26 +392,20 @@ diff -r ad90e7fab364 dwm.c
 +			XSync(dpy, False);
 +		}
 +	}
-+	updatebarpos(selmon);
-+	if(!systray->icons) {
-+		pos -= 1;
-+		XMoveResizeWindow(dpy, systray->win, pos, 0, 1, 1);
-+		return;
-+	}
 +	for(i = systray->icons; i; i = i->next) {
 +		XMapWindow(dpy, i->win);
 +		XMoveResizeWindow(dpy, i->win, (i->geo.x = w), 0, i->geo.width, i->geo.height);
 +		w += i->geo.width + systrayspacing;
 +	}
-+	pos -= w;
-+	XMoveResizeWindow(dpy, systray->win, pos, pos_y, w, bh);
++	x -= w;
++	XMoveResizeWindow(dpy, systray->win, x, selmon->by, w, bh);
 +}
 +
 +void
  updatewindowtype(Client *c) {
  	Atom state = getatomprop(c, netatom[NetWMState]);
  	Atom wtype = getatomprop(c, netatom[NetWMWindowType]);
-@@ -2083,6 +2267,16 @@
+@@ -2083,6 +2258,16 @@
  	return selmon;
  }
  
