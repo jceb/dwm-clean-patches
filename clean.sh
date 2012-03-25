@@ -2,12 +2,12 @@
 test $# -eq 0 && echo "USAGE: $(basename $0) <releaseID> [PATCHES]" && exit
 
 hg qpop -a
-tip=$(hg identify | awk '{print $1}')
+tip=$(hg tip | awk '/^[0-9]/ {gsub("\\[.*", "", $1); print $1 "_" $2}')
 release="$1"
 shift
 mkdir -p "$release/${tip}"
 
-cp .hg/patches/README "$release/${tip}/Readme"
+cp .hg/patches/README "$release/${tip}/"
 
 #for i in $(find .hg/patches -maxdepth 1 -type f -not -iname \*configh\* -not -iname broken_\* -not -iname inmain_\* -name \*.patch -printf "%f\n")
 for i in $(cat .hg/patches/series | grep -v personal_configh | grep -v broken | cut -f1 -d\ )
