@@ -7,7 +7,7 @@ $ cat >> ~/.hgrc
 mq =
 
 # clone patches repository including the dwm repository
-$ hg qclone ssh://hg@bitbucket.org/jceb81/dwm-patches
+$ hg qclone hg qclone https://bitbucket.org/jceb81/dwm-patches
 
 # activate all patches, including the personal configuration
 $ hg qpush -a

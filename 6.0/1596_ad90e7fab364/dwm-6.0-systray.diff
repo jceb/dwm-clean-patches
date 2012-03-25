@@ -4,7 +4,7 @@ Implements a system tray for dwm.
 
 diff -r ad90e7fab364 config.def.h
 --- a/config.def.h	Fri Feb 10 00:36:08 2012 +0000
-+++ b/config.def.h	Sat Mar 24 18:01:59 2012 +0100
++++ b/config.def.h	Sun Mar 25 11:43:07 2012 +0200
 @@ -10,6 +10,8 @@
  static const char selfgcolor[]      = "#eeeeee";
  static const unsigned int borderpx  = 1;        /* border pixel of windows */
@@ -14,17 +14,9 @@ diff -r ad90e7fab364 config.def.h
  static const Bool showbar           = True;     /* False means no bar */
  static const Bool topbar            = True;     /* False means bottom bar */
  
-@@ -31,6 +33,7 @@
- static const int nmaster      = 1;    /* number of clients in master area */
- static const Bool resizehints = True; /* True means respect size hints in tiled resizals */
- 
-+
- static const Layout layouts[] = {
- 	/* symbol     arrange function */
- 	{ "[]=",      tile },    /* first entry is default */
 diff -r ad90e7fab364 dwm.c
 --- a/dwm.c	Fri Feb 10 00:36:08 2012 +0000
-+++ b/dwm.c	Sat Mar 24 18:01:59 2012 +0100
++++ b/dwm.c	Sun Mar 25 11:43:07 2012 +0200
 @@ -55,12 +55,15 @@
  #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
  #define TEXTW(X)                (textnw(X, strlen(X)) + dc.font.height)

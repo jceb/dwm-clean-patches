@@ -17,7 +17,7 @@ Please be aware that this patch probably breaks any other patch!
 
 diff -r ad90e7fab364 dwm.c
 --- a/dwm.c	Fri Feb 10 00:36:08 2012 +0000
-+++ b/dwm.c	Sat Mar 24 13:41:03 2012 +0100
++++ b/dwm.c	Sun Mar 25 11:43:05 2012 +0200
 @@ -45,7 +45,7 @@
  #define CLEANMASK(mask)         (mask & ~(numlockmask|LockMask) & (ShiftMask|ControlMask|Mod1Mask|Mod2Mask|Mod3Mask|Mod4Mask|Mod5Mask))
  #define INTERSECT(x,y,w,h,m)    (MAX(0, MIN((x)+(w),(m)->wx+(m)->ww) - MAX((x),(m)->wx)) \
@@ -82,6 +82,15 @@ diff -r ad90e7fab364 dwm.c
  
  /* configuration, allows nested code to access above variables */
  #include "config.h"
+@@ -313,7 +320,7 @@
+ 		{
+ 			c->isfloating = r->isfloating;
+ 			c->tags |= r->tags;
+-			for(m = mons; m && m->num != r->monitor; m = m->next);
++			for(m = mons; m && (m->tagset[m->seltags] & c->tags) == 0; m = m->next) ;
+ 			if(m)
+ 				c->mon = m;
+ 		}
 @@ -394,9 +401,9 @@
  void
  arrange(Monitor *m) {
