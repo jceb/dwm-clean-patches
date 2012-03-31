@@ -240,7 +240,7 @@ diff -r ad90e7fab364 dwm.c
  	                      &da, &di, &dl, &dl, &p) == Success && p) {
  		atom = *(Atom *)p;
 +		if(da == xatom[XembedInfo] && dl == 2)
-+			atom = (Atom *)p[1];
++			atom = ((Atom *)p)[1];
  		XFree(p);
  	}
  	return atom;
