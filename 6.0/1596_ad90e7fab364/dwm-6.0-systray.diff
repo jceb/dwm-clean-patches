@@ -4,7 +4,7 @@ Implements a system tray for dwm.
 
 diff -r ad90e7fab364 config.def.h
 --- a/config.def.h	Fri Feb 10 00:36:08 2012 +0000
-+++ b/config.def.h	Fri Mar 30 23:01:12 2012 +0200
++++ b/config.def.h	Sat Mar 31 18:37:35 2012 +0200
 @@ -10,6 +10,8 @@
  static const char selfgcolor[]      = "#eeeeee";
  static const unsigned int borderpx  = 1;        /* border pixel of windows */
@@ -16,7 +16,7 @@ diff -r ad90e7fab364 config.def.h
  
 diff -r ad90e7fab364 dwm.c
 --- a/dwm.c	Fri Feb 10 00:36:08 2012 +0000
-+++ b/dwm.c	Fri Mar 30 23:01:12 2012 +0200
++++ b/dwm.c	Sat Mar 31 18:37:35 2012 +0200
 @@ -55,12 +55,30 @@
  #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
  #define TEXTW(X)                (textnw(X, strlen(X)) + dc.font.height)
@@ -100,7 +100,7 @@ diff -r ad90e7fab364 dwm.c
  static void updatestatus(void);
 +static void updatesystray(void);
 +static void updatesystrayicongeom(Client *i, int w, int h);
-+static void updatesystrayiconstate(Client *i);
++static void updatesystrayiconstate(Client *i, XPropertyEvent *ev);
  static void updatewindowtype(Client *c);
  static void updatetitle(Client *c);
  static void updatewmhints(Client *c);
@@ -160,16 +160,16 @@ diff -r ad90e7fab364 dwm.c
 +			c->next = systray->icons;
 +			systray->icons = c;
 +			XGetWindowAttributes(dpy, c->win, &wa);
-+			c->x = c->oldx = wa.x;
-+			c->y = c->oldy = wa.y;
++			c->x = c->oldx = c->y = c->oldy = 0;
 +			c->w = c->oldw = wa.width;
 +			c->h = c->oldh = wa.height;
 +			c->oldbw = wa.border_width;
 +			c->bw = 0;
-+			c->isfloating = False;
++			c->isfloating = True;
++			/* reuse tags field as mapped status */
++			c->tags = 1;
 +			updatesizehints(c);
 +			updatesystrayicongeom(c, wa.width, wa.height);
-+			applysizehints(c, &(c->x), &(c->y), &(c->w), &(c->h), False);
 +			XAddToSaveSet(dpy, c->win);
 +			XSelectInput(dpy, c->win, StructureNotifyMask | PropertyChangeMask | ResizeRedirectMask);
 +			XReparentWindow(dpy, c->win, systray->win, 0, 0);
@@ -225,7 +225,26 @@ diff -r ad90e7fab364 dwm.c
  		if(dc.x < x) {
  			dc.x = x;
  			dc.w = m->ww - x;
-@@ -962,6 +1045,15 @@
+@@ -917,10 +1000,17 @@
+ 	unsigned long dl;
+ 	unsigned char *p = NULL;
+ 	Atom da, atom = None;
++	/* FIXME getatomprop should return the number of items and a pointer to
++	 * the stored data instead of this workaround */
++	Atom req = XA_ATOM;
++	if(prop == xatom[XembedInfo])
++		req = xatom[XembedInfo];
+ 
+-	if(XGetWindowProperty(dpy, c->win, prop, 0L, sizeof atom, False, XA_ATOM,
++	if(XGetWindowProperty(dpy, c->win, prop, 0L, sizeof atom, False, req,
+ 	                      &da, &di, &dl, &dl, &p) == Success && p) {
+ 		atom = *(Atom *)p;
++		if(da == xatom[XembedInfo] && dl == 2)
++			atom = (Atom *)p[1];
+ 		XFree(p);
+ 	}
+ 	return atom;
+@@ -962,6 +1052,15 @@
  	return result;
  }
  
@@ -241,7 +260,7 @@ diff -r ad90e7fab364 dwm.c
  Bool
  gettextprop(Window w, Atom atom, char *text, unsigned int size) {
  	char **list = NULL;
-@@ -1096,7 +1188,7 @@
+@@ -1096,7 +1195,7 @@
  killclient(const Arg *arg) {
  	if(!selmon->sel)
  		return;
@@ -250,7 +269,7 @@ diff -r ad90e7fab364 dwm.c
  		XGrabServer(dpy);
  		XSetErrorHandler(xerrordummy);
  		XSetCloseDownMode(dpy, DestroyAll);
-@@ -1180,6 +1272,12 @@
+@@ -1180,6 +1279,12 @@
  maprequest(XEvent *e) {
  	static XWindowAttributes wa;
  	XMapRequestEvent *ev = &e->xmaprequest;
@@ -263,19 +282,24 @@ diff -r ad90e7fab364 dwm.c
  
  	if(!XGetWindowAttributes(dpy, ev->window, &wa))
  		return;
-@@ -1294,6 +1392,11 @@
+@@ -1294,6 +1399,16 @@
  	Window trans;
  	XPropertyEvent *ev = &e->xproperty;
  
 +	if((c = wintosystrayicon(ev->window))) {
-+		updatesystrayiconstate(c);
++		if(ev->atom == XA_WM_NORMAL_HINTS) {
++			updatesizehints(c);
++			updatesystrayicongeom(c, c->w, c->h);
++		}
++		else
++			updatesystrayiconstate(c, ev);
 +		resizebarwin(selmon);
 +		updatesystray();
 +	}
  	if((ev->window == root) && (ev->atom == XA_WM_NAME))
  		updatestatus();
  	else if(ev->state == PropertyDelete)
-@@ -1343,12 +1446,33 @@
+@@ -1343,12 +1458,33 @@
  }
  
  void
@@ -309,7 +333,7 @@ diff -r ad90e7fab364 dwm.c
  resizeclient(Client *c, int x, int y, int w, int h) {
  	XWindowChanges wc;
  
-@@ -1413,6 +1537,19 @@
+@@ -1413,6 +1549,18 @@
  }
  
  void
@@ -319,7 +343,6 @@ diff -r ad90e7fab364 dwm.c
 +
 +	if((i = wintosystrayicon(ev->window))) {
 +		updatesystrayicongeom(i, ev->width, ev->height);
-+		applysizehints(i, &(i->x), &(i->y), &(i->w), &(i->h), False);
 +		resizebarwin(selmon);
 +		updatesystray();
 +	}
@@ -329,7 +352,7 @@ diff -r ad90e7fab364 dwm.c
  restack(Monitor *m) {
  	Client *c;
  	XEvent ev;
-@@ -1496,25 +1633,35 @@
+@@ -1496,25 +1644,35 @@
  }
  
  Bool
@@ -376,7 +399,7 @@ diff -r ad90e7fab364 dwm.c
  	}
  	return exists;
  }
-@@ -1523,7 +1670,7 @@
+@@ -1523,7 +1681,7 @@
  setfocus(Client *c) {
  	if(!c->neverfocus)
  		XSetInputFocus(dpy, c->win, RevertToPointerRoot, CurrentTime);
@@ -385,7 +408,7 @@ diff -r ad90e7fab364 dwm.c
  }
  
  void
-@@ -1603,11 +1750,17 @@
+@@ -1603,11 +1761,17 @@
  	wmatom[WMTakeFocus] = XInternAtom(dpy, "WM_TAKE_FOCUS", False);
  	netatom[NetActiveWindow] = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
  	netatom[NetSupported] = XInternAtom(dpy, "_NET_SUPPORTED", False);
@@ -403,7 +426,7 @@ diff -r ad90e7fab364 dwm.c
  	/* init cursors */
  	cursor[CurNormal] = XCreateFontCursor(dpy, XC_left_ptr);
  	cursor[CurResize] = XCreateFontCursor(dpy, XC_sizing);
-@@ -1624,6 +1777,8 @@
+@@ -1624,6 +1788,8 @@
  	XSetLineAttributes(dpy, dc.gc, 1, LineSolid, CapButt, JoinMiter);
  	if(!dc.font.set)
  		XSetFont(dpy, dc.gc, dc.font.xfont->fid);
@@ -412,7 +435,7 @@ diff -r ad90e7fab364 dwm.c
  	/* init bars */
  	updatebars();
  	updatestatus();
-@@ -1732,8 +1887,18 @@
+@@ -1732,8 +1898,18 @@
  togglebar(const Arg *arg) {
  	selmon->showbar = !selmon->showbar;
  	updatebarpos(selmon);
@@ -432,7 +455,7 @@ diff -r ad90e7fab364 dwm.c
  }
  
  void
-@@ -1817,11 +1982,18 @@
+@@ -1817,11 +1993,18 @@
  		else
  			unmanage(c, False);
  	}
@@ -451,7 +474,7 @@ diff -r ad90e7fab364 dwm.c
  	XSetWindowAttributes wa = {
  		.override_redirect = True,
  		.background_pixmap = ParentRelative,
-@@ -1830,7 +2002,10 @@
+@@ -1830,7 +2013,10 @@
  	for(m = mons; m; m = m->next) {
  		if (m->barwin)
  			continue;
@@ -463,13 +486,12 @@ diff -r ad90e7fab364 dwm.c
  		                          CopyFromParent, DefaultVisual(dpy, screen),
  		                          CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
  		XDefineCursor(dpy, m->barwin, cursor[CurNormal]);
-@@ -2014,6 +2189,88 @@
+@@ -2014,6 +2200,102 @@
  }
  
  void
 +updatesystrayicongeom(Client *i, int w, int h) {
 +	if(i) {
-+		/* deal with tray icons that have rectangle proportions */
 +		i->h = bh;
 +		if(w == h)
 +			i->w = bh;
@@ -477,30 +499,43 @@ diff -r ad90e7fab364 dwm.c
 +			i->w = w;
 +		else
 +			i->w = (int) ((float)bh * ((float)w / (float)h));
++		applysizehints(i, &(i->x), &(i->y), &(i->w), &(i->h), False);
++		/* force icons into the systray dimenons if they don't want to */
++		if(i->h > bh) {
++			if(i->w == i->h)
++				i->w = bh;
++			else
++				i->w = (int) ((float)bh * ((float)i->w / (float)i->h));
++			i->h = bh;
++		}
 +	}
 +}
 +
 +void
-+updatesystrayiconstate(Client *i) {
++updatesystrayiconstate(Client *i, XPropertyEvent *ev) {
 +	long flags;
 +	int code = 0;
 +
-+	if(!showsystray || !i || !(flags = getatomprop(i, xatom[XembedInfo])))
++	if(!showsystray || !i || ev->atom != xatom[XembedInfo] ||
++			!(flags = getatomprop(i, xatom[XembedInfo])))
 +		return;
-+	/* somehow this doesn't work at all, the clients get unmapped */
-+	return;
 +
-+	if(flags & XEMBED_MAPPED) {
++	if(flags & XEMBED_MAPPED && !i->tags) {
++		i->tags = 1;
 +		code = XEMBED_WINDOW_ACTIVATE;
 +		XMapRaised(dpy, i->win);
 +		setclientstate(i, NormalState);
 +	}
-+	else {
++	else if(!(flags & XEMBED_MAPPED) && i->tags) {
++		i->tags = 0;
 +		code = XEMBED_WINDOW_DEACTIVATE;
 +		XUnmapWindow(dpy, i->win);
 +		setclientstate(i, WithdrawnState);
 +	}
-+	sendevent(i->win, xatom[Xembed], StructureNotifyMask, CurrentTime, code, 0, systray->win, XEMBED_EMBEDDED_VERSION);
++	else
++		return;
++	sendevent(i->win, xatom[Xembed], StructureNotifyMask, CurrentTime, code, 0,
++			systray->win, XEMBED_EMBEDDED_VERSION);
 +}
 +
 +void
@@ -543,6 +578,8 @@ diff -r ad90e7fab364 dwm.c
 +		XMapWindow(dpy, i->win);
 +		XMoveResizeWindow(dpy, i->win, (i->x = w), 0, i->w, i->h);
 +		w += i->w + systrayspacing;
++		if(i->mon != selmon)
++			i->mon = selmon;
 +	}
 +	x -= w;
 +	XMoveResizeWindow(dpy, systray->win, x, selmon->by, w, bh);
@@ -552,7 +589,7 @@ diff -r ad90e7fab364 dwm.c
  updatewindowtype(Client *c) {
  	Atom state = getatomprop(c, netatom[NetWMState]);
  	Atom wtype = getatomprop(c, netatom[NetWMWindowType]);
-@@ -2083,6 +2340,16 @@
+@@ -2083,6 +2365,16 @@
  	return selmon;
  }
  
