@@ -2,10 +2,11 @@
 test $# -eq 0 && echo "USAGE: $(basename $0) <releaseID> [PATCHES]" && exit
 
 hg qpop -a
-tip=$(hg tip | awk '/^[0-9]/ {gsub("\\[.*", "", $1); print $1 "_" $2}')
+tip=$(hg identify -n -r $(hg identify -i))_$(hg identify -r $(hg identify -i) | awk '{print $1}')
 release="$1"
 shift
 mkdir -p "$release/${tip}"
+exit
 
 cp .hg/patches/README "$release/${tip}/"
 

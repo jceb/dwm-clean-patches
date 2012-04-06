@@ -1,5 +1,5 @@
 include config.mk
-VVERSION=$(shell echo $(VERSION)|sed -e 's/-tip$$//')
+VVERSION=$(shell hg identify -r $(shell hg identify -i) | awk '{print $$2}')
 
 .PHONY: all build clean cleanconfigh
 
