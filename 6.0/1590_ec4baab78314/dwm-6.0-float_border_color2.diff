@@ -1,0 +1,84 @@
+URL: http://dwm.suckless.org/patches/historical/float_border_color
+float_border_color2 allows you to specify a different border color for floating
+windows.
+
+diff -r ec4baab78314 config.def.h
+--- a/config.def.h	Mon Dec 19 15:38:30 2011 +0100
++++ b/config.def.h	Fri Apr 06 08:23:26 2012 +0200
+@@ -8,6 +8,8 @@
+ static const char selbordercolor[]  = "#005577";
+ static const char selbgcolor[]      = "#005577";
+ static const char selfgcolor[]      = "#eeeeee";
++static const char floatnormbordercolor[] = "#005577";
++static const char floatselbordercolor[]  = "#005577";
+ static const unsigned int borderpx  = 1;        /* border pixel of windows */
+ static const unsigned int snap      = 32;       /* snap pixel */
+ static const Bool showbar           = True;     /* False means no bar */
+diff -r ec4baab78314 dwm.c
+--- a/dwm.c	Mon Dec 19 15:38:30 2011 +0100
++++ b/dwm.c	Fri Apr 06 08:23:26 2012 +0200
+@@ -57,7 +57,7 @@
+ 
+ /* enums */
+ enum { CurNormal, CurResize, CurMove, CurLast };        /* cursor */
+-enum { ColBorder, ColFG, ColBG, ColLast };              /* color */
++enum { ColBorder, ColFG, ColBG, ColBorderFloat, ColLast };              /* color */
+ enum { NetSupported, NetWMName, NetWMState,
+        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
+        NetWMWindowTypeDialog, NetLast };     /* EWMH atoms */
+@@ -855,7 +855,10 @@
+ 		detachstack(c);
+ 		attachstack(c);
+ 		grabbuttons(c, True);
+-		XSetWindowBorder(dpy, c->win, dc.sel[ColBorder]);
++		if(c->isfloating)
++			XSetWindowBorder(dpy, c->win, dc.sel[ColBorderFloat]);
++		else
++			XSetWindowBorder(dpy, c->win, dc.sel[ColBorder]);
+ 		setfocus(c);
+ 	}
+ 	else
+@@ -1155,6 +1158,8 @@
+ 		c->isfloating = c->oldstate = trans != None || c->isfixed;
+ 	if(c->isfloating)
+ 		XRaiseWindow(dpy, c->win);
++	if(c->isfloating)
++		XSetWindowBorder(dpy, w, dc.norm[ColBorderFloat]);
+ 	attach(c);
+ 	attachstack(c);
+ 	XMoveResizeWindow(dpy, c->win, c->x + 2 * sw, c->y, c->w, c->h); /* some windows require this */
+@@ -1615,9 +1620,11 @@
+ 	dc.norm[ColBorder] = getcolor(normbordercolor);
+ 	dc.norm[ColBG] = getcolor(normbgcolor);
+ 	dc.norm[ColFG] = getcolor(normfgcolor);
++	dc.norm[ColBorderFloat] = getcolor(floatnormbordercolor);
+ 	dc.sel[ColBorder] = getcolor(selbordercolor);
+ 	dc.sel[ColBG] = getcolor(selbgcolor);
+ 	dc.sel[ColFG] = getcolor(selfgcolor);
++	dc.sel[ColBorderFloat] = getcolor(floatselbordercolor);
+ 	dc.drawable = XCreatePixmap(dpy, root, DisplayWidth(dpy, screen), bh, DefaultDepth(dpy, screen));
+ 	dc.gc = XCreateGC(dpy, root, 0, NULL);
+ 	XSetLineAttributes(dpy, dc.gc, 1, LineSolid, CapButt, JoinMiter);
+@@ -1741,6 +1748,10 @@
+ 		return;
+ 	selmon->sel->isfloating = !selmon->sel->isfloating || selmon->sel->isfixed;
+ 	if(selmon->sel->isfloating)
++		XSetWindowBorder(dpy, selmon->sel->win, dc.sel[ColBorderFloat]);
++	else
++		XSetWindowBorder(dpy, selmon->sel->win, dc.sel[ColBorder]);
++	if(selmon->sel->isfloating)
+ 		resize(selmon->sel, selmon->sel->x, selmon->sel->y,
+ 		       selmon->sel->w, selmon->sel->h, False);
+ 	arrange(selmon);
+@@ -1776,7 +1787,10 @@
+ 	if(!c)
+ 		return;
+ 	grabbuttons(c, False);
+-	XSetWindowBorder(dpy, c->win, dc.norm[ColBorder]);
++	if(c->isfloating)
++		XSetWindowBorder(dpy, c->win, dc.norm[ColBorderFloat]);
++	else
++		XSetWindowBorder(dpy, c->win, dc.norm[ColBorder]);
+ 	if(setfocus)
+ 		XSetInputFocus(dpy, root, RevertToPointerRoot, CurrentTime);
+ }

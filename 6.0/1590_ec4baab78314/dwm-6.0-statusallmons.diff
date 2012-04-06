@@ -1,0 +1,43 @@
+URL: http://dwm.suckless.org/patches/statusallmons
+This patch draws and updates the statusbar on all monitors.
+
+diff -r ec4baab78314 dwm.c
+--- a/dwm.c	Mon Dec 19 15:38:30 2011 +0100
++++ b/dwm.c	Fri Apr 06 08:23:39 2012 +0200
+@@ -740,17 +740,13 @@
+ 	drawtext(m->ltsymbol, dc.norm, False);
+ 	dc.x += dc.w;
+ 	x = dc.x;
+-	if(m == selmon) { /* status is only drawn on selected monitor */
+-		dc.w = TEXTW(stext);
+-		dc.x = m->ww - dc.w;
+-		if(dc.x < x) {
+-			dc.x = x;
+-			dc.w = m->ww - x;
+-		}
+-		drawtext(stext, dc.norm, False);
++	dc.w = TEXTW(stext);
++	dc.x = m->ww - dc.w;
++	if(dc.x < x) {
++		dc.x = x;
++		dc.w = m->ww - x;
+ 	}
+-	else
+-		dc.x = m->ww;
++	drawtext(stext, dc.norm, False);
+ 	if((dc.w = dc.x - x) > bh) {
+ 		dc.x = x;
+ 		if(m->sel) {
+@@ -2005,9 +2001,11 @@
+ 
+ void
+ updatestatus(void) {
++	Monitor* m;
+ 	if(!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)))
+ 		strcpy(stext, "dwm-"VERSION);
+-	drawbar(selmon);
++	for(m = mons; m; m = m->next)
++		drawbar(m);
+ }
+ 
+ void

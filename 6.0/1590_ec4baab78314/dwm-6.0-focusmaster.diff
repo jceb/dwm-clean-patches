@@ -1,0 +1,12 @@
+Author: Jan Christoph Ebersbach <jceb@e-jc.de>
+URL: no URL yet
+Straight forward patch to focus the master window with a keybinding.
+
+diff -r ec4baab78314 focusmaster.c
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/focusmaster.c	Fri Apr 06 08:23:48 2012 +0200
+@@ -0,0 +1,4 @@
++static void
++focusmaster(const Arg *arg) {
++	focus(selmon->clients);
++}
