@@ -1,0 +1,55 @@
+URL: http://dwm.suckless.org/patches/swapfocus
+This patch makes it possible to switch focus with one single shortcut (alt-s)
+instead of having to think if you should use alt-j or alt-k for reaching the
+last used window.
+
+diff -r c794a9f5ae5e dwm.c
+--- a/dwm.c	Sun Jul 08 09:45:53 2012 +0200
++++ b/dwm.c	Sun Jul 15 22:15:36 2012 +0200
+@@ -225,6 +225,7 @@
+ static void showhide(Client *c);
+ static void sigchld(int unused);
+ static void spawn(const Arg *arg);
++static void swapfocus();
+ static void tag(const Arg *arg);
+ static void tagmon(const Arg *arg);
+ static int textnw(const char *text, unsigned int len);
+@@ -255,6 +256,7 @@
+ static void zoom(const Arg *arg);
+ 
+ /* variables */
++static Client *prevclient = NULL;
+ static const char broken[] = "broken";
+ static char stext[256];
+ static int screen;
+@@ -1695,6 +1697,14 @@
+ }
+ 
+ void
++swapfocus(){
++	Client *c;
++	for(c = selmon->clients; c && c != prevclient; c = c->next) ;
++	if(c == prevclient)
++		focus(prevclient);
++}
++
++void
+ tag(const Arg *arg) {
+ 	if(selmon->sel && arg->ui & TAGMASK) {
+ 		selmon->sel->tags = arg->ui & TAGMASK;
+@@ -1797,6 +1807,7 @@
+ unfocus(Client *c, Bool setfocus) {
+ 	if(!c)
+ 		return;
++	prevclient = c;
+ 	grabbuttons(c, False);
+ 	XSetWindowBorder(dpy, c->win, dc.norm[ColBorder]);
+ 	if(setfocus) {
+@@ -2155,6 +2166,7 @@
+ void
+ zoom(const Arg *arg) {
+ 	Client *c = selmon->sel;
++	prevclient = selmon->clients;
+ 
+ 	if(!selmon->lt[selmon->sellt]->arrange
+ 	|| (selmon->sel && selmon->sel->isfloating))
