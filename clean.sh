@@ -5,11 +5,18 @@ hg qpop -a
 rev=$(hg identify -i)
 tip=$(hg identify -n -r "$rev")_$(hg identify -r "$rev" | awk '{print $1}')
 tag=$(hg tags | awk "/$rev\$/ {print \$1}")
-if [[ -n $tag ]]; then
+if [[ -n $tag ]] && [[ $tag != 'tip' ]]; then
 	tip="${tip}_tag_${tag}"
 fi
 release="$1"
 shift
+if [[ $release = 'tip' ]]; then
+	release=$(hg identify -t -r $(hg tags | sed -n -e '2p' | sed -e 's/^.*://'))
+fi
+if [[ -z $release ]]; then
+	echo 'Unable to find a release.'
+	exit 1
+fi
 mkdir -p "$release/${tip}"
 
 cp .hg/patches/README "$release/${tip}/"
