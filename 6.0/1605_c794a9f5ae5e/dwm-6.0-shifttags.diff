@@ -1,0 +1,35 @@
+# HG changeset patch
+# Parent c794a9f5ae5eee168e8995c31e0dcad46a764ef9
+
+diff -r c794a9f5ae5e shifttags.c
+--- /dev/null	Thu Jan 01 00:00:00 1970 +0000
++++ b/shifttags.c	Sat Aug 18 13:28:29 2012 +0200
+@@ -0,0 +1,28 @@
++static void
++shifttags(const Arg *arg) {
++	Arg shift;
++	/* wrap around tags when shifting over the ends of tagmask */
++	/* only activate wrapping when the number of tags fits twice into an
++	 * unsigned int */
++	Bool wrap = LENGTH(tags) <= (sizeof(shift.ui) * 4) ? True : False;
++
++	if(arg->i == 0)
++		return;
++
++	if(arg->i > 0)
++		shift.ui = selmon->tagset[selmon->seltags] << arg->i;
++	else {
++		if(wrap) {
++			shift.ui = selmon->tagset[selmon->seltags] << LENGTH(tags);
++			shift.ui = shift.ui >> (-1 * arg->i);
++		}
++		else
++			shift.ui = selmon->tagset[selmon->seltags] >> (-1 * arg->i);
++	}
++	if(wrap)
++		shift.ui |= shift.ui >> LENGTH(tags);
++
++	if(!(shift.ui & TAGMASK))
++		return;
++	view(&shift);
++}

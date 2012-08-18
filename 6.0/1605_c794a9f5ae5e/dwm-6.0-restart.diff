@@ -1,0 +1,32 @@
+# HG changeset patch
+# Parent c794a9f5ae5eee168e8995c31e0dcad46a764ef9
+
+diff -r c794a9f5ae5e dwm.c
+--- a/dwm.c	Sun Jul 08 09:45:53 2012 +0200
++++ b/dwm.c	Sat Aug 18 13:28:16 2012 +0200
+@@ -280,6 +280,7 @@
+ };
+ static Atom wmatom[WMLast], netatom[NetLast];
+ static Bool running = True;
++static Bool restart = False;
+ static Cursor cursor[CurLast];
+ static Display *dpy;
+ static DC dc;
+@@ -1337,6 +1338,8 @@
+ 
+ void
+ quit(const Arg *arg) {
++	if(arg->i)
++		restart = True;
+ 	running = False;
+ }
+ 
+@@ -2179,6 +2182,8 @@
+ 	setup();
+ 	scan();
+ 	run();
++	if(restart)
++		execvp(argv[0], argv);
+ 	cleanup();
+ 	XCloseDisplay(dpy);
+ 	return EXIT_SUCCESS;

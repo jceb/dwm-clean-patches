@@ -24,7 +24,9 @@ maximize_vert_horz.patch  - http://dwm.suckless.org/patches/historical/moveresiz
 moveresize.patch          - http://dwm.suckless.org/patches/historical/moveresize
 pertag.patch              - http://dwm.suckless.org/patches/pertag
 push.patch                - http://dwm.suckless.org/patches/push
+restart.patch             - no URL yet
 save_floats.patch         - http://dwm.suckless.org/patches/historical/save_floats
+shifttags.patch           - no URL yet
 single_tagset.patch       - http://dwm.suckless.org/patches/single_tagset
 single_window_no_border   - http://dwm.suckless.org/patches/noborder
 statusallmons.patch       - http://dwm.suckless.org/patches/statusallmons
@@ -35,4 +37,4 @@ zoomswap.patch            - http://dwm.suckless.org/patches/zoomswap
 
 Not maintained
 --------------
-raiselower.patch              - http://dwm.suckless.org/patches/historical/raiselower
+raiselower.patch          - http://dwm.suckless.org/patches/historical/raiselower
