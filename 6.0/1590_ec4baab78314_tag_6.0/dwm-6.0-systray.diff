@@ -572,7 +572,7 @@ diff -r ec4baab78314 dwm.c
 +		XSelectInput(dpy, systray->win, SubstructureNotifyMask);
 +		XChangeProperty(dpy, systray->win, netatom[NetSystemTrayOrientation], XA_CARDINAL, 32,
 +				PropModeReplace, (unsigned char *)&systrayorientation, 1);
-+		XChangeWindowAttributes(dpy, systray->win, CWEventMask | CWOverrideRedirect | CWBackPixel, &wa);
++		XChangeWindowAttributes(dpy, systray->win, CWEventMask|CWOverrideRedirect|CWBackPixel|CWBackPixmap, &wa);
 +		XMapRaised(dpy, systray->win);
 +		XSetSelectionOwner(dpy, netatom[NetSystemTray], systray->win, CurrentTime);
 +		if(XGetSelectionOwner(dpy, netatom[NetSystemTray]) == systray->win) {
