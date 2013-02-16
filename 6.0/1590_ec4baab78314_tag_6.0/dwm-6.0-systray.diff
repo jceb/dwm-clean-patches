@@ -143,7 +143,7 @@ diff -r ec4baab78314 dwm.c
  	XSync(dpy, False);
  	XSetInputFocus(dpy, PointerRoot, RevertToPointerRoot, CurrentTime);
  }
-@@ -530,9 +571,48 @@
+@@ -530,9 +572,49 @@
  
  void
  clientmessage(XEvent *e) {
@@ -177,7 +177,8 @@ diff -r ec4baab78314 dwm.c
 +			XReparentWindow(dpy, c->win, systray->win, 0, 0);
 +			/* use parents background pixmap */
 +			swa.background_pixmap = ParentRelative;
-+			XChangeWindowAttributes(dpy, c->win, CWBackPixmap, &swa);
++			swa.background_pixel  = dc.norm[ColBG];
++			XChangeWindowAttributes(dpy, c->win, CWBackPixmap|CWBackPixel, &swa);
 +			sendevent(c->win, netatom[Xembed], StructureNotifyMask, CurrentTime, XEMBED_EMBEDDED_NOTIFY, 0 , systray->win, XEMBED_EMBEDDED_VERSION);
 +			/* FIXME not sure if I have to send these events, too */
 +			sendevent(c->win, netatom[Xembed], StructureNotifyMask, CurrentTime, XEMBED_FOCUS_IN, 0 , systray->win, XEMBED_EMBEDDED_VERSION);
@@ -499,7 +500,7 @@ diff -r ec4baab78314 dwm.c
  		                          CopyFromParent, DefaultVisual(dpy, screen),
  		                          CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
  		XDefineCursor(dpy, m->barwin, cursor[CurNormal]);
-@@ -2011,6 +2205,104 @@
+@@ -2011,6 +2208,107 @@
  }
  
  void
@@ -597,6 +598,9 @@ diff -r ec4baab78314 dwm.c
 +	w = w ? w + systrayspacing : 1;
 + 	x -= w;
 +	XMoveResizeWindow(dpy, systray->win, x, selmon->by, w, bh);
++	/* redraw background */
++	XSetForeground(dpy, dc.gc, dc.norm[ColBG]);
++	XFillRectangle(dpy, systray->win, dc.gc, 0, 0, w, bh);
 +	XSync(dpy, False);
 +}
 +
