@@ -1,3 +1,8 @@
+dwm-clean-patches
+=================
+
+*The following description needs to be updated to comply with git!*
+
 This repository contains a selection of patches for different versions
 of dwm. For every version of dwm there is a directory. Every directory
 contains with the changeset id as its name. Below this directory the
