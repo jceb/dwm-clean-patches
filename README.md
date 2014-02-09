@@ -13,46 +13,46 @@ The tools `git` and `quilt` are required for modifying the patches.
 
 Check out the dwm-patches repository:
 
-  $ git clone https://github.com/jceb/dwm-patches
-  $ cd dwm-patches
+    $ git clone https://github.com/jceb/dwm-patches
+    $ cd dwm-patches
 
 Check out the dwm-clean-patches repository:
 
-  $ git clone https://github.com/jceb/dwm-clean-patches
+    $ git clone https://github.com/jceb/dwm-clean-patches
 
 Create symlinks to `clean.mk` and `clean.sh`:
 
-  $ ln -s dwm-clean-patches/clean.* .
+    $ ln -s dwm-clean-patches/clean.* .
 
 ## Usage
 
 Update all patches from the dwm-patches repository to apply cleanly against the
 tip of the dwm repository:
 
-  $ ./clean.mk
+    $ ./clean.mk
 
 Certainly errors will occur when running the above command. Fix the error and
 run:
 
-  $ export QUILT_SERIES=single_series
-  $ quilt refresh
+    $ export QUILT_SERIES=single_series
+    $ quilt refresh
 
 Continue updating patches till all apply cleanly:
 
-  $ ./clean.mk
+    $ ./clean.mk
 
 Specific patches can be updated by passing them as arguments:
 
-  $ ./clean.mk args="PATCH1 [PATCH2]"
+    $ ./clean.mk args="PATCH1 [PATCH2]"
 
 Finally upload the resulting directory containing only patches that apply
 cleanly against the tip of the dwm repository:
 
-  $ cp -r $VERSION dwm-clean-patches/
-  $ cd dwm-clean-patches
-  $ git add $VERSION
+    $ cp -r $VERSION dwm-clean-patches/
+    $ cd dwm-clean-patches
+    $ git add $VERSION
 
 Don't forget to revert the changes you did to the patches of the dwm-patches
 repository:
 
-  $ git checkout -- patches/*
+    $ git checkout -- patches/*
