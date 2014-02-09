@@ -1,53 +1,59 @@
-#!/bin/sh
+#!/bin/bash
 test $# -eq 0 && echo "USAGE: $(basename $0) <releaseID> [PATCHES]" && exit
 
-hg qpop -a
-rev=$(hg identify -i)
-tip=$(hg identify -n -r "$rev")_$(hg identify -r "$rev" | awk '{print $1}')
-tag=$(hg tags | awk "/$rev\$/ {print \$1}")
-if [[ -n $tag ]] && [[ $tag != 'tip' ]]; then
-	tip="${tip}_tag_${tag}"
-fi
+export QUILT_PATCHES=patches
+export QUILT_SERIES=single_series
+
+set -u
+set -e
+
+quilt pop -a || true
+
 release="$1"
 shift
-if [[ $release = 'tip' ]]; then
-	release=$(hg identify -t -r $(hg tags | sed -n -e '2p' | sed -e 's/^.*://'))
-fi
 if [[ -z $release ]]; then
 	echo 'Unable to find a release.'
 	exit 1
 fi
-mkdir -p "$release/${tip}"
+rev="$(cd dwm && git rev-parse HEAD)"
+commits="$(cd dwm && git log --format=format:%H | wc -l)"
+tag="$(cd dwm && git tag -l "${release}")"
+if [ -n "${tag}" ] && [ "${rev}" = "$(cd dwm && git rev-parse "${tag}")" ]; then
+	rev="${rev}_tag_${tag}"
+fi
 
-cp .hg/patches/README "$release/${tip}/"
+mkdir -p "$release/${commits}_${rev}"
 
-#for i in $(find .hg/patches -maxdepth 1 -type f -not -iname \*configh\* -not -iname broken_\* -not -iname inmain_\* -name \*.patch -printf "%f\n")
-for i in $(cat .hg/patches/series | grep -v personal_configh | grep -v broken | cut -f1 -d\ )
+cp README.md "$release/${commits}_${rev}/"
+
+cat patches/series | grep -v personal_configh | grep -v broken | grep -v ^# | grep -v disabled | while read i
 do
-    hg qguard $i +$i
-	if [[ $# -ge 1 ]]; then
+	patch="$(echo "${i}" | cut -f1 -d\ )"
+	if [ $# -ge 1 ]; then
 		found=
 		for j in "$@"
 		do
-			if [[ "$i" = "$j" ]]; then
+			if [ "${patch}" = "$j" ]; then
 				found=1
 			fi
 		done
-		if [[ -z "$found" ]]; then
+		if [ -z "$found" ]; then
 			continue
 		fi
 	fi
-    echo
-    echo $i
-    hg qselect $i
-    rm -f config.h
-    if ! hg qpush; then
-        echo "Please fix the problem manually"
-        exit 1
-    fi
-    make || exit 1
-    hg qrefresh
-	diffname=$(echo $i | sed -e 's/\.patch$/.diff/')
-	cp -v .hg/patches/$i "$release/${tip}/dwm-$release-${diffname}"
-    hg qpop -a
+
+	echo
+	echo "${patch}"
+	echo "${i}" > "patches/${QUILT_SERIES}"
+	rm -f dwm/config.h
+	if ! quilt push -f; then
+		echo "Please fix the problem manually"
+		exit 1
+	fi
+	(cd dwm && make)
+	quilt refresh
+
+	diffname="${patch%.patch}.diff"
+	cp -v "patches/${patch}" "$release/${commits}_${rev}/dwm-$release-${diffname}"
+	quilt pop
 done

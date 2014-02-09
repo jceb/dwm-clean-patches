@@ -1,0 +1,39 @@
+Author: Jan Christoph Ebersbach <jceb@e-jc.de>
+URL: no URL yet
+Extension to the toggleview function.  The first client from the added/toggled
+tag is focussed.  This emulates a simple scratch pad functionality by keeping
+the "scratch pad" window(s) on a certain tag that can be toggled by pressing an
+easy to reach keybinding.
+
+Index: dwm/config.def.h
+===================================================================
+--- dwm/config.def.h.orig	2014-02-09 15:24:07.000116826 +0100
++++ dwm/config.def.h	2014-02-09 15:24:06.996116826 +0100
+@@ -54,6 +54,7 @@
+ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", font, "-nb", normbgcolor, "-nf", normfgcolor, "-sb", selbgcolor, "-sf", selfgcolor, NULL };
+ static const char *termcmd[]  = { "st", NULL };
+ 
++#include "toggleview_focus.c"
+ static Key keys[] = {
+ 	/* modifier                     key        function        argument */
+ 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
+@@ -71,6 +72,7 @@
+ 	{ MODKEY,                       XK_t,      setlayout,      {.v = &layouts[0]} },
+ 	{ MODKEY,                       XK_f,      setlayout,      {.v = &layouts[1]} },
+ 	{ MODKEY,                       XK_m,      setlayout,      {.v = &layouts[2]} },
++	{ MODKEY,                       XK_space,  toggleview_focus, {.ui = 1} },
+ 	{ MODKEY,                       XK_space,  setlayout,      {0} },
+ 	{ MODKEY|ShiftMask,             XK_space,  togglefloating, {0} },
+ 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
+Index: dwm/toggleview_focus.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ dwm/toggleview_focus.c	2014-02-09 15:24:06.996116826 +0100
+@@ -0,0 +1,7 @@
++static void toggleview_focus(const Arg *arg) {
++	Client *c;
++	toggleview(arg);
++	for(c = selmon->clients; !(c->tags & arg->ui) && c->next; c = c->next) ;
++	if(c && c->tags & arg->ui)
++		focus(c);
++}

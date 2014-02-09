@@ -1,0 +1,89 @@
+URL: http://dwm.suckless.org/patches/historical/float_border_color
+float_border_color2 allows you to specify a different border color for floating
+windows.
+
+Index: dwm/config.def.h
+===================================================================
+--- dwm/config.def.h.orig	2014-02-09 15:24:13.708117011 +0100
++++ dwm/config.def.h	2014-02-09 15:24:13.700117011 +0100
+@@ -8,6 +8,8 @@
+ static const char selbordercolor[]  = "#005577";
+ static const char selbgcolor[]      = "#005577";
+ static const char selfgcolor[]      = "#eeeeee";
++static const char floatnormbordercolor[] = "#005577";
++static const char floatselbordercolor[]  = "#005577";
+ static const unsigned int borderpx  = 1;        /* border pixel of windows */
+ static const unsigned int snap      = 32;       /* snap pixel */
+ static const Bool showbar           = True;     /* False means no bar */
+Index: dwm/dwm.c
+===================================================================
+--- dwm/dwm.c.orig	2014-02-09 15:24:13.708117011 +0100
++++ dwm/dwm.c	2014-02-09 15:24:13.700117011 +0100
+@@ -792,7 +792,10 @@
+ 		detachstack(c);
+ 		attachstack(c);
+ 		grabbuttons(c, True);
+-		XSetWindowBorder(dpy, c->win, scheme[SchemeSel].border->rgb);
++		if(c->isfloating)
++			XSetWindowBorder(dpy, c->win, scheme[SchemeSel].floatborder->rgb);
++		else
++			XSetWindowBorder(dpy, c->win, scheme[SchemeSel].border->rgb);
+ 		setfocus(c);
+ 	}
+ 	else {
+@@ -1040,7 +1043,10 @@
+ 
+ 	wc.border_width = c->bw;
+ 	XConfigureWindow(dpy, w, CWBorderWidth, &wc);
+-	XSetWindowBorder(dpy, w, scheme[SchemeNorm].border->rgb);
++	if(c->isfloating)
++		XSetWindowBorder(dpy, w, scheme[SchemeNorm].floatborder->rgb);
++	else
++		XSetWindowBorder(dpy, w, scheme[SchemeNorm].border->rgb);
+ 	configure(c); /* propagates border_width, if size doesn't change */
+ 	updatewindowtype(c);
+ 	updatesizehints(c);
+@@ -1051,6 +1057,8 @@
+ 		c->isfloating = c->oldstate = trans != None || c->isfixed;
+ 	if(c->isfloating)
+ 		XRaiseWindow(dpy, c->win);
++	if(c->isfloating)
++		XSetWindowBorder(dpy, w, scheme[SchemeNorm].floatborder->rgb);
+ 	attach(c);
+ 	attachstack(c);
+ 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32, PropModeAppend,
+@@ -1522,9 +1530,11 @@
+ 	cursor[CurResize] = drw_cur_create(drw, XC_sizing);
+ 	cursor[CurMove] = drw_cur_create(drw, XC_fleur);
+ 	/* init appearance */
++	scheme[SchemeNorm].floatborder = drw_clr_create(drw, floatnormbordercolor);
+ 	scheme[SchemeNorm].border = drw_clr_create(drw, normbordercolor);
+ 	scheme[SchemeNorm].bg = drw_clr_create(drw, normbgcolor);
+ 	scheme[SchemeNorm].fg = drw_clr_create(drw, normfgcolor);
++	scheme[SchemeSel].floatborder = drw_clr_create(drw, floatselbordercolor);
+ 	scheme[SchemeSel].border = drw_clr_create(drw, selbordercolor);
+ 	scheme[SchemeSel].bg = drw_clr_create(drw, selbgcolor);
+ 	scheme[SchemeSel].fg = drw_clr_create(drw, selfgcolor);
+@@ -1641,6 +1651,10 @@
+ 		return;
+ 	selmon->sel->isfloating = !selmon->sel->isfloating || selmon->sel->isfixed;
+ 	if(selmon->sel->isfloating)
++		XSetWindowBorder(dpy, selmon->sel->win, scheme[SchemeSel].floatborder->rgb);
++	else
++		XSetWindowBorder(dpy, selmon->sel->win, scheme[SchemeSel].border->rgb);
++	if(selmon->sel->isfloating)
+ 		resize(selmon->sel, selmon->sel->x, selmon->sel->y,
+ 		       selmon->sel->w, selmon->sel->h, False);
+ 	arrange(selmon);
+Index: dwm/drw.h
+===================================================================
+--- dwm/drw.h.orig	2014-02-09 15:24:13.708117011 +0100
++++ dwm/drw.h	2014-02-09 15:24:13.700117011 +0100
+@@ -20,6 +20,7 @@
+ 	Clr *fg;
+ 	Clr *bg;
+ 	Clr *border;
++	Clr *floatborder;
+ } ClrScheme;
+ 
+ typedef struct {

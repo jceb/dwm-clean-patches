@@ -1,0 +1,64 @@
+Author: Jan Christoph Ebersbach <jceb@e-jc.de>
+URL: http://dwm.suckless.org/patches/attachabove
+attachabove makes new clients attach above the selected client (instead of
+always becoming the new master) – basically how Xmonad does it.
+
+Index: dwm/dwm.c
+===================================================================
+--- dwm/dwm.c.orig	2014-02-09 15:24:20.560117200 +0100
++++ dwm/dwm.c	2014-02-09 15:24:20.552117200 +0100
+@@ -146,6 +146,7 @@
+ static void arrange(Monitor *m);
+ static void arrangemon(Monitor *m);
+ static void attach(Client *c);
++static void attachabove(Client *c);
+ static void attachstack(Client *c);
+ static void buttonpress(XEvent *e);
+ static void checkotherwm(void);
+@@ -401,6 +402,19 @@
+ }
+ 
+ void
++attachabove(Client *c) {
++	if(c->mon->sel == NULL || c->mon->sel == c->mon->clients || c->mon->sel->isfloating) {
++		attach(c);
++		return;
++	}
++
++	Client *at;
++	for(at = c->mon->clients; at->next != c->mon->sel; at = at->next);
++	c->next = at->next;
++	at->next = c;
++}
++
++void
+ attachstack(Client *c) {
+ 	c->snext = c->mon->stack;
+ 	c->mon->stack = c;
+@@ -1051,7 +1065,7 @@
+ 		c->isfloating = c->oldstate = trans != None || c->isfixed;
+ 	if(c->isfloating)
+ 		XRaiseWindow(dpy, c->win);
+-	attach(c);
++	attachabove(c);
+ 	attachstack(c);
+ 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32, PropModeAppend,
+ 	                (unsigned char *) &(c->win), 1);
+@@ -1383,7 +1397,7 @@
+ 	detachstack(c);
+ 	c->mon = m;
+ 	c->tags = m->tagset[m->seltags]; /* assign tags of target monitor */
+-	attach(c);
++	attachabove(c);
+ 	attachstack(c);
+ 	focus(NULL);
+ 	arrange(NULL);
+@@ -1818,7 +1832,7 @@
+ 					m->clients = c->next;
+ 					detachstack(c);
+ 					c->mon = mons;
+-					attach(c);
++					attachabove(c);
+ 					attachstack(c);
+ 				}
+ 				if(m == selmon)

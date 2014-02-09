@@ -1,13 +1,14 @@
-include config.mk
-VVERSION=$(shell hg identify -r $(shell hg qpop -a &> /dev/null; hg identify -i) | awk '{print $$2}')
+#!/usr/bin/make -f
+include dwm/config.mk
 
-.PHONY: all build clean cleanconfigh
+.PHONY: all build clean
 
 all: build
 
-build: .hg/patches .hg/patches/README clean.sh
-	./clean.sh $(VVERSION) $(args)
+build: dwm/dwm.c patches/series README.md clean.sh
+	./clean.sh "$(VERSION)" $(args)
 
 clean:
-	-rm -rf $(VVERSION)
-	-rm -f *.rej *.orig
+	-QUILT_SERIES=single_series quilt pop -a
+	-rm -rf $(VERSION)
+	-rm -f dwm/*.rej dwm/*.orig

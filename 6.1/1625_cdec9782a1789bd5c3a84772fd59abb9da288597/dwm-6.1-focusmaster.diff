@@ -1,0 +1,13 @@
+Author: Jan Christoph Ebersbach <jceb@e-jc.de>
+URL: no URL yet
+Straight forward patch to focus the master window with a keybinding.
+
+Index: dwm/focusmaster.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ dwm/focusmaster.c	2014-02-09 15:24:23.908117292 +0100
+@@ -0,0 +1,4 @@
++static void
++focusmaster(const Arg *arg) {
++	focus(nexttiled(selmon->clients));
++}

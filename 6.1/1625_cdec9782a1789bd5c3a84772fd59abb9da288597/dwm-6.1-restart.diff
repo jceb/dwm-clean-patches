@@ -1,0 +1,34 @@
+Author: unknown
+URL: no URL yet
+Add functionality to restart dwm.
+
+Index: dwm/dwm.c
+===================================================================
+--- dwm/dwm.c.orig	2014-02-09 15:24:08.148116858 +0100
++++ dwm/dwm.c	2014-02-09 15:24:08.140116858 +0100
+@@ -259,6 +259,7 @@
+ };
+ static Atom wmatom[WMLast], netatom[NetLast];
+ static Bool running = True;
++static Bool restart = False;
+ static Cur *cursor[CurLast];
+ static ClrScheme scheme[SchemeLast];
+ static Display *dpy;
+@@ -1226,6 +1227,8 @@
+ 
+ void
+ quit(const Arg *arg) {
++	if(arg->i)
++		restart = True;
+ 	running = False;
+ }
+ 
+@@ -2057,6 +2060,8 @@
+ 	setup();
+ 	scan();
+ 	run();
++	if(restart)
++		execvp(argv[0], argv);
+ 	cleanup();
+ 	XCloseDisplay(dpy);
+ 	return EXIT_SUCCESS;
