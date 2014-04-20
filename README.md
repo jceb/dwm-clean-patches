@@ -43,7 +43,7 @@ Continue updating patches till all apply cleanly:
 
 Specific patches can be updated by passing them as arguments:
 
-    $ ./clean.mk args="PATCH1 [PATCH2]"
+    $ ./clean.mk ARGS="PATCH1 [PATCH2]"
 
 Finally upload the resulting directory containing only patches that apply
 cleanly against the tip of the dwm repository:
