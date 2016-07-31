@@ -15,16 +15,21 @@ if [ -z "${release}" ]; then
 	echo 'Unable to find a release.'
 	exit 1
 fi
-rev="$(cd dwm && git rev-parse HEAD)"
-commits="$(cd dwm && git log --format=format:%H | wc -l)"
+date="$(date +%Y%m%d)"
+rev="$(cd dwm && git rev-parse --short HEAD)"
+rev_dir="$(cd dwm && git rev-parse HEAD)"
+commitcount="$(cd dwm && git log --format=format:%H | wc -l)"
 tag="$(cd dwm && git tag -l "${release}")"
-if [ -n "${tag}" ] && [ "${rev}" = "$(cd dwm && git rev-parse "${tag}")" ]; then
-	rev="${rev}_tag_${tag}"
+if [ -n "${tag}" ] && [ "${rev}" = "$(cd dwm && git rev-parse --short "${tag}")" ]; then
+	rev_dir="${rev_dir}_${tag}"
+	rev="${tag}"
+else
+    rev="${date}-${rev}"
 fi
 
-mkdir -p "${release}/${commits}_${rev}"
+mkdir -p "${release}/${commitcount}_${rev_dir}"
 
-cp README.md "${release}/${commits}_${rev}/"
+cp README.md "${release}/${commitcount}_${rev_dir}/"
 
 cat "${QUILT_PATCHES}/series" | grep -v personal_configh | grep -v broken | grep -v ^# | grep -v disabled | while read i; do
 	patch="$(echo "${i}" | cut -f1 -d\ )"
@@ -52,7 +57,7 @@ cat "${QUILT_PATCHES}/series" | grep -v personal_configh | grep -v broken | grep
 	(cd dwm && make)
 	quilt refresh
 
-	diffname="${patch%.patch}.diff"
-	cp -v "${QUILT_PATCHES}/${patch}" "${release}/${commits}_${rev}/dwm-${release}-${diffname}"
+	diffname="${patch%.patch}-${rev}.diff"
+	cp -v "${QUILT_PATCHES}/${patch}" "${release}/${commitcount}_${rev_dir}/dwm-${diffname}"
 	quilt pop
 done
