@@ -8,7 +8,7 @@
 
     cd dwm-patches
     git submodule init dwm
-    git submodule upload dwm
+    git submodule update dwm
 
 ## activate all patches, including the personal configuration
 
